@@ -1,2 +1,4 @@
 Account   	Name             	Surname               	Balance
-1         	e                	e                     	0.000
+10        	e                	e                     	-10.000
+34        	e                	e                     	0.000
+44        	g                	c                     	200.300
