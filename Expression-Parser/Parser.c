@@ -1,79 +1,109 @@
-#include "Parser.h"
 #include <stdio.h>
-#include <ctype.h>
+#include "LexicalAnalyzer.h"
+#include "LexicalAnalyzer.c"
 
-#define MAX_LEN 256
-
-char* yytext = "";
-int yyleng = 0;
-int yyline = 0;
-
-int parser(FILE* file){
-    
-    static char input_buff[MAX_LEN];                                // Buffer for the line (lexeme)
-    char* current;
-
-    current = yytext + yyleng;                                      // Current position on the line
-
-    while(1){
-        
-        while(*current == '\0'){                                    // !*current
-
-            current = input_buff;                                   // Reset current to initial posizion of the buffer
-            if(!fgets(current, MAX_LEN, file)){                     // Take the next line
-                *current = '\0';
-                return EOI;
-            }
-            yyline++;
-
-            while(isblank(*current)){
-                current++;
-            }
-        }
-
-        for(; *current; ++current){                                 // Actual tokenizazion of the taken line
-
-            yytext = current;
-            yyleng = 1;
-
-            switch(*current){
-
-                case ';': return SEMI;
-                case '(': return LP;
-                case ')': return RP;
-                case '+': return PLUS;
-                case '*': return TIMES;
-
-                case ' ':
-                case '\t':
-                case '\n':
-                    break;
-
-                default:
-                    if(isalnum(*current)){
-
-                        while(isalnum(*current)){
-                            current++;
-                        }
-                        yyleng = current-yytext;
-                        return NUM_OR_ID;
-
-                    }else{
-                        printf("Errore %c carattere non riconosciuto\n", current);
-                    }
-                    break;
-            }
-        }
-    }
-}
+void statement(FILE* file);
+void expression(FILE* file);
+void expressionPrime(FILE* file);
+void term(FILE* file);
+void termPrime(FILE* file);
+void factor(FILE* file);
 
 void main(){
 
     FILE* file = fopen("Test.txt", "r");
-    
-    printf("%d\n", parser(file));
-    printf("%d\n", parser(file));
-    printf("%d\n", parser(file));
-
+    statement(file);
     fclose(file);
+}
+
+void statement(FILE* file){
+
+    /*
+        statements -> expression; EOI
+        statements -> expression; statement
+    */
+
+    expression(file);
+
+    if(match(file, SEMI)){
+        advance(file);
+    }else{
+        printf("Error missing semicolon on line %d\n", yyline);
+    }
+
+    if(!match(file, EOI)){
+        statement(file);
+    }
+}
+
+void expression(FILE* file){
+
+    /*
+        expression -> term expression'
+    */
+    
+    term(file);
+    expressionPrime(file);
+}
+
+void expressionPrime(FILE* file){
+
+    /*
+        expression' -> + term expression' | E
+    */
+
+    if(match(file, PLUS)){
+        advance(file);
+        term(file);
+        expressionPrime(file);
+    }
+}
+
+void term(FILE* file){
+
+    /*
+        term -> factor term'
+    */
+
+    factor(file);
+    termPrime(file);
+}
+
+void termPrime(FILE* file){
+
+    /*
+        term' -> * factor term' | E
+    */
+
+    if(match(file, TIMES)){
+        advance(file);
+        factor(file);
+        termPrime(file);
+    }
+}
+
+void factor(FILE* file){
+
+    /*
+        factor -> NUM_OR_ID
+        factor -> (expression)
+    */
+
+    if(match(file, NUM_OR_ID)){
+        advance(file);
+
+    }else if((match(file, LP))){
+
+        advance(file);
+        expression(file);
+
+        if(match(file, RP)){
+            advance(file);
+        }else{
+            printf("Error parenthesis on line %d\n", yyline);
+        }
+
+    }else{
+        printf("Error number or id missing on line %d\n", yyline);
+    }
 }
