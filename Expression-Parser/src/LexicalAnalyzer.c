@@ -9,8 +9,13 @@ char* yytext = "";
 int yyleng = 0;
 int yyline = 0;
 
-int lexicalAnalyzer(FILE* file){
+int lexicalAnalyzer(){
     
+    static FILE* file = NULL;
+    if(!file){
+        file = fopen("Test.txt", "r");
+    }
+
     static char input_buff[MAX_LEN];                                // Buffer for the line (lexeme)
     char* current;
 
@@ -60,7 +65,7 @@ int lexicalAnalyzer(FILE* file){
                         return NUM_OR_ID;
 
                     }else{
-                        printf("Errore %c carattere non riconosciuto\n", *current);
+                        fprintf(stderr, "%d, Errore: %c carattere non riconosciuto\n", yyline, *current);
                     }
                     break;
             }
@@ -70,15 +75,15 @@ int lexicalAnalyzer(FILE* file){
 
 static int lookahead = -1;
 
-bool match(FILE* file, int token){
+bool match(int token){
 
     if(lookahead == -1){
-        lookahead = lexicalAnalyzer(file);
+        lookahead = lexicalAnalyzer();
     }
 
     return token == lookahead;
 }
 
-int advance(FILE* file){
-    lookahead = lexicalAnalyzer(file);
+int advance(){
+    lookahead = lexicalAnalyzer();
 }
