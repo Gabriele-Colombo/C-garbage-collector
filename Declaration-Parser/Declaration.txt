@@ -1,0 +1,10 @@
+signed long double x;
+int y;
+
+long long int z;
+
+short int ;
+
+signed char a;
+
+float b;
